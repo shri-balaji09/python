@@ -1,0 +1,78 @@
+import speech_recognition as sr
+import pyttsx3
+import pywhatkit
+import datetime
+import wikipedia
+import pyjokes
+
+class VoiceAssistant:
+    def __init__(self):
+        self.listener = sr.Recognizer()
+        self.engine = pyttsx3.init()
+        self.voices = self.engine.getProperty('voices')
+        self.engine.setProperty('voice', self.voices[1].id)
+
+    def talk(self, text):
+        self.engine.say(text)
+        self.engine.runAndWait()
+
+    def get_command(self):
+        try:
+            with sr.Microphone() as source:
+                print("Listening....")
+                self.listener.adjust_for_ambient_noise(source)  # Optional: Adjust for ambient noise
+                voice = self.listener.listen(source, timeout=200)  # Set a timeout
+                command = self.listener.recognize_google(voice).lower()
+                if "youtube" in command:
+                    command = command.replace("youtube", "")
+                return command
+        except sr.UnknownValueError:
+            print("No speech detected")
+            return ""
+        except sr.RequestError as e:
+            print(f"Speech recognition request failed: {e}")
+            return ""
+        except Exception as e:
+            print(f"Error in voice recognition: {e}")
+            return ""
+
+    def play_youtube(self, song):
+        self.talk("Playing " + song)
+        pywhatkit.playonyt(song)
+
+    def get_time(self):
+        current_time = datetime.datetime.now().strftime("%H:%M %p")
+        self.talk("Current time is " + current_time)
+
+    def get_wikipedia_info(self, query):
+        info = wikipedia.summary(query, 2)
+        print(info)
+        self.talk(info)
+
+    def tell_joke(self):
+        joke = pyjokes.get_joke()
+        self.talk(joke)
+
+    def run_assistant(self):
+        command = self.get_command()
+        print(command)
+
+        if 'play' in command:
+            self.play_youtube(command.replace("play", '').strip())
+
+        elif "time" in command:
+            self.get_time()
+
+        elif "tell me about" in command:
+            self.get_wikipedia_info(command.replace("tell me about", '').strip())
+
+        elif "joke" in command:
+            self.tell_joke()
+
+        else:
+            self.talk("Sorry, I can't understand. Please tell me again.")
+
+if __name__ == "__main__":
+    assistant = VoiceAssistant()
+    while True:
+        assistant.run_assistant()
